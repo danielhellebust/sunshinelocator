@@ -4,9 +4,10 @@ import dash
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
 
 # create a dash app with a interactive map with bubbles
-app = dash.Dash()
+app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 #Load data
@@ -29,6 +30,7 @@ for i in range(len(df)):
         name= df_sub['month'][i],
         visible=False,
         showlegend=True,
+        mode='markers',
         marker = dict(
             size = df_sub['sunshine']/3.5,
             color = '#EDE8BA',
@@ -40,7 +42,7 @@ for i in range(len(df)):
 # Set layout properties for the figure
 fig.update_layout(
         showlegend = True,
-        height=800,
+        height=1000,
         legend=dict(
         orientation="h",
         yanchor="bottom",
@@ -51,31 +53,53 @@ fig.update_layout(
         geo = dict(
             scope = 'usa',
             landcolor = 'rgb(217, 217, 217)',
-        )
+            bgcolor = 'black',
+            lakecolor = 'lightblue',
+            showrivers = True,
+            showlakes = True,
+            showcountries = True,
+            showsubunits = True,
+            resolution = 50,
+        ),
     )
 
 
 # create app layout
 app.layout = html.Div([
-    html.Div('Sunshine state of the month', style={'text-align': 'center', 'font-size': '50px'}),
-    html.H3('Select cities:', style={'text-align': 'center'}),
-    dcc.Checklist(
-        id='dropdown_cities',
-        inline=True,
-        style={'width': '100%', 'display': 'inline-block', 'text-align': 'center', 'border': '0px solid black'},
-        options=[{'label': i, 'value': i} for i in df['city'].unique()],
-        value=[i for i in df['city'].unique()]),
+    dbc.Row([
+        dbc.Col(
+            dbc.Row(
+                [
+                    html.Div([html.H1('Sunshine state of the month',
+                    style={'text-align': 'center', 'color': 'white', 'padding-top': '100px'})]),
 
-    html.H3('Choose month:',style={'text-align': 'center'}),
-    dcc.RadioItems(
-        id='dropdown',
-        inline=True,
-        style={'width': '100%', 'display': 'inline-block','text-align': 'center', 'font_size': '20px'},
-        options=[{'label': month_dict[i], 'value': i} for i in df['month'].unique()],
-        value=''
-    ),
-    dcc.Graph(id='graph', figure=fig, style={'width': '100%', 'display': 'inline-block'}),
-])
+                    dcc.Graph(id='graph', figure=fig,
+                    style={'width': '100%', 'color': 'black',
+                        'text-color': 'white'})]),md=8),
+        dbc.Col(
+            dbc.Row(
+                [
+                    html.Div([html.H3('Select cities:', style={'text-align': 'left', 'color': 'white'})]),
+                    dcc.Checklist(
+                        id='dropdown_cities',
+                        style={'width': '100%', 'text-align': 'left',
+                               'border': '0px solid black', 'color': 'white'},
+                        options=[{'label': i, 'value': i} for i in df['city'].unique()],
+                        value=[i for i in df['city'].unique()]),
+
+                    html.H3('Choose month:',style={'padding': '10px','text-align': 'left', 'color': 'white'}),
+                    dcc.RadioItems(
+                            id='dropdown',
+                            style={'width': '100%','text-align': 'left', 'font_size': '20px', 'color': 'white'},
+                            options=[{'label': month_dict[i], 'value': i} for i in df['month'].unique()],
+                            value=''
+                        ),
+
+
+
+                ]),md=4,style={'padding-right': '250px', 'padding-top':'150px', 'background-color': 'black'})]),
+
+], style={'width': '100%', 'background-color': 'black'})
 
 # add callback for dropdown
 @app.callback(
@@ -96,7 +120,7 @@ def update_graph(month, city_list):
             if df['sunshine'][i] == max_temp_month:
                 fig.data[i].marker.color = '#FCE570'
                 #Sunshine state of the month is
-                sunshine_state = f'Sunshine state of {month_dict[month]} is {df["city"][i]} with {df["sunshine"][i]} hours of sunshine.'
+                sunshine_state = f'Sunshine state of {month_dict[month]} is {df["city"][i]} with {df["sunshine"][i]} hours of sunshine'
             else:
                 fig.data[i].marker.color = '#EDE8BA'
         else:
@@ -107,11 +131,19 @@ def update_graph(month, city_list):
     fig.update_layout(
         title={
             'text': sunshine_state,
-            'font_size': 30,
-            'y':0.95,
+            'font_size': 25,
+            'y':0.92,
             'x':0.5,
             'xanchor': 'center',
             'yanchor': 'top'})
+
+    #update background color to black
+    fig.update_layout(
+        paper_bgcolor='black',
+        plot_bgcolor='black',
+        font_color='white'
+    )
+
 
     return fig
 
